@@ -4,13 +4,11 @@
 from setuptools import find_packages
 from setuptools import setup
 
-
 long_description = '\n\n'.join([
     open('README.rst').read(),
     open('CONTRIBUTORS.rst').read(),
     open('CHANGES.rst').read(),
 ])
-
 
 setup(
     name='collective.webhook',
@@ -42,11 +40,15 @@ setup(
         # -*- Extra requirements: -*-
         'plone.api>=1.8.4',
         'Products.GenericSetup>=1.8.2',
+        'requests',
+        'six',
+        'futures',
         'setuptools',
-        'z3c.jbot',
     ],
     extras_require={
         'test': [
+            'Pillow',
+            'plone.app.imaging',
             'plone.app.testing',
             # Plone KGS does not use this version, because it would break
             # Remove if your package shall be part of coredev.

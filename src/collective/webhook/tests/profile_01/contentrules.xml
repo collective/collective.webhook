@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<contentrules>
+  <rule name="rule-1" title="Call webhook" cascading="False"
+        description="" enabled="True"
+        event="zope.lifecycleevent.interfaces.IObjectAddedEvent"
+        stop-after="False">
+    <conditions/>
+    <actions>
+      <action type="plone.actions.Webhook">
+        <property name="url">http://localhost:8080/</property>
+        <property name="payload">{"url": "${url}"}</property>
+        <property name="method">POST</property>
+      </action>
+    </actions>
+  </rule>
+  <assignment name="rule-1" bubbles="True" enabled="True" location=""/>
+</contentrules>

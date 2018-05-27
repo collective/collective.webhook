@@ -1,0 +1,40 @@
+<configure
+  xmlns="http://namespaces.zope.org/zope"
+  xmlns:browser="http://namespaces.zope.org/browser"
+  xmlns:plone="http://namespaces.plone.org/plone"
+  i18n_domain="collective.webhook">
+
+  <!-- Webhook action definition -->
+
+  <include package="plone.app.contentrules" />
+
+  <adapter factory=".webhook.WebhookActionExecutor"/>
+  <adapter factory=".webhook.PayloadValidator"/>
+
+  <browser:page
+    for="plone.app.contentrules.browser.interfaces.IRuleActionAdding"
+    name="plone.actions.Webhook"
+    class=".webhook.WebhookAddFormView"
+    permission="plone.app.contentrules.ManageContentRules"
+  />
+
+  <browser:page
+    for="collective.webhook.actions.webhook.IWebhookAction"
+    name="edit"
+    class=".webhook.WebhookEditFormView"
+    permission="plone.app.contentrules.ManageContentRules"
+  />
+
+  <plone:ruleAction
+    name="plone.actions.Webhook"
+    title="Call webhook"
+    description="Call an webhook related to the triggering object"
+    for="*"
+    event="*"
+    addview="plone.actions.Webhook"
+    editview="edit"
+    schema=".webhook.IWebhookAction"
+    factory=".webhook.WebhookAction"
+  />
+
+</configure>
