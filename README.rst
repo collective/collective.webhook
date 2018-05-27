@@ -57,14 +57,6 @@ Contribute
 
 - Issue Tracker: https://github.com/collective/collective.webhook/issues
 - Source Code: https://github.com/collective/collective.webhook
-.. - Documentation: https://docs.plone.org/foo/bar
-
-
-.. Support
-.. -------
-..
-.. If you are having issues, please let us know.
-.. We have a mailing list located at: project@example.com
 
 
 License
