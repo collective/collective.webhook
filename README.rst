@@ -6,6 +6,12 @@
 collective.webhook
 ==================
 
+.. image:: https://travis-ci.org/collective/collective.webhook.svg?branch=master
+   :target: https://travis-ci.org/collective/collective.webhook
+
+.. image:: https://coveralls.io/repos/github/collective/collective.webhook/badge.svg
+   :target: https://coveralls.io/github/collective/collective.webhookj
+
 A Plone content rule action for executing HTTP GET or POST with interpolated JSON payload on content event.
 
 
