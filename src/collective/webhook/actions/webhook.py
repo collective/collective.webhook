@@ -45,7 +45,7 @@ class IWebhookAction(Interface):
     )
     payload = schema.Text(
         title=_(u'JSON Payload'),
-        description=_(u'The payload you want to POST'),
+        description=_(u'The payload you want to dispatch in JSON'),
         required=False,
     )
 
