@@ -29,7 +29,7 @@ logger = logging.getLogger('collective.webhook')
 methods = SimpleVocabulary([
     SimpleTerm(value=u'GET', title=_(u'GET')),
     SimpleTerm(value=u'POST', title=_(u'POST')),
-    SimpleTerm(value=u'FORM', title=_(u'POST FORM)')),
+    SimpleTerm(value=u'FORM', title=_(u'POST FORM')),
 ])
 
 
