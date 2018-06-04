@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.2 (unreleased)
+0.2 (2018-06-04)
 ----------------
 
 - Add dedicated method POST FORM for HTTP POST with Content-Type:
