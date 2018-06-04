@@ -1,11 +1,11 @@
 Changelog
 =========
 
-0.3 (unreleased)
-----------------
+0.2.1 (unreleased)
+------------------
 
-- Nothing changed yet.
-
+- Fix typo in vocabulary value title
+  [Asko Soukka]
 
 0.2 (2018-06-04)
 ----------------
