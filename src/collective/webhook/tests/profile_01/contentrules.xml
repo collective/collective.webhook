@@ -1,6 +1,19 @@
 <?xml version="1.0"?>
 <contentrules>
-  <rule name="rule-1" title="Call webhook" cascading="False"
+  <rule name="rule-1" title="HTTP GET" cascading="False"
+        description="" enabled="True"
+        event="zope.lifecycleevent.interfaces.IObjectAddedEvent"
+        stop-after="False">
+    <conditions/>
+    <actions>
+      <action type="plone.actions.Webhook">
+        <property name="url">http://localhost:8080/</property>
+        <property name="payload">{"url": "${url}"}</property>
+        <property name="method">GET</property>
+      </action>
+    </actions>
+  </rule>
+  <rule name="rule-2" title="HTTP POST" cascading="False"
         description="" enabled="True"
         event="zope.lifecycleevent.interfaces.IObjectAddedEvent"
         stop-after="False">
@@ -13,5 +26,20 @@
       </action>
     </actions>
   </rule>
+  <rule name="rule-3" title="HTTP FORM POST" cascading="False"
+        description="" enabled="True"
+        event="zope.lifecycleevent.interfaces.IObjectAddedEvent"
+        stop-after="False">
+    <conditions/>
+    <actions>
+      <action type="plone.actions.Webhook">
+        <property name="url">http://localhost:8080/</property>
+        <property name="payload">{"url": "${url}"}</property>
+        <property name="method">FORM</property>
+      </action>
+    </actions>
+  </rule>
   <assignment name="rule-1" bubbles="True" enabled="True" location=""/>
+  <assignment name="rule-2" bubbles="True" enabled="True" location=""/>
+  <assignment name="rule-3" bubbles="True" enabled="True" location=""/>
 </contentrules>

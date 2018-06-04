@@ -29,6 +29,7 @@ logger = logging.getLogger('collective.webhook')
 methods = SimpleVocabulary([
     SimpleTerm(value=u'GET', title=_(u'GET')),
     SimpleTerm(value=u'POST', title=_(u'POST')),
+    SimpleTerm(value=u'FORM', title=_(u'POST FORM)')),
 ])
 
 
@@ -123,7 +124,12 @@ class WebhookActionExecutor(object):
         payload = interpolate(json.loads(self.element.payload), interpolator)
         try:
             if method == 'POST':
-                payload = json.dumps(payload)
+                EXECUTOR.submit(
+                    r.post, url, json=payload, timeout=self.timeout
+                )
+            elif method == 'FORM':
+                for key in payload:
+                    payload[key] = json.dumps(payload[key]).strip('"')
                 EXECUTOR.submit(
                     r.post, url, data=payload, timeout=self.timeout
                 )

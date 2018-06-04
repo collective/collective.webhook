@@ -37,12 +37,12 @@ class WebhookTests(unittest.TestCase):
         portal = self.layer['portal']
 
         rule = portal.restrictedTraverse('++rule++rule-1')
-        self.assertEqual(rule.title, u'Call webhook')
+        self.assertEqual(rule.title, u'HTTP GET')
         self.assertEqual(len(rule.actions), 1)
 
         action = rule.actions[0]
         self.assertIsInstance(action, WebhookAction)
-        self.assertEqual(action.method, 'POST')
+        self.assertEqual(action.method, 'GET')
         self.assertEqual(action.url, 'http://localhost:8080/')
         self.assertEqual(action.payload, '{"url": "${url}"}')
 
@@ -51,32 +51,58 @@ class WebhookTests(unittest.TestCase):
             '/' + PLONE_SITE_ID, ann['plone.app.contentrules.ruleassignments']
         )
 
-    def test_execute_get(self):
+    def test_execute_rules(self):
         portal = self.layer['portal']
-        rule = portal.restrictedTraverse('++rule++rule-1')
-        action = rule.actions[0]
-
-        log = []
 
         class Mock(object):
+            def __init__(self, log):
+                self.log = log
+
+            def get(self, *args, **kwargs):
+                self.log.append((args, kwargs))
+
             def post(self, *args, **kwargs):
-                log.append((args, kwargs))
+                self.log.append((args, kwargs))
 
         storage = getUtility(IRuleStorage)
         storage.active = True
-        action.requests = Mock()
+
+        get = []
+        rule = portal.restrictedTraverse('++rule++rule-1')
+        action = rule.actions[0]
+        action.requests = Mock(get)
+
+        post = []
+        rule = portal.restrictedTraverse('++rule++rule-2')
+        action = rule.actions[0]
+        action.requests = Mock(post)
+
+        form = []
+        rule = portal.restrictedTraverse('++rule++rule-3')
+        action = rule.actions[0]
+        action.requests = Mock(form)
 
         login(portal, TEST_USER_NAME)
         setRoles(portal, TEST_USER_ID, ['Contributor'])
         portal.invokeFactory('Folder', 'section')  # noqa: P001
 
         for i in range(10):
-            if len(log):
+            if len(get) and len(post) and len(form):
                 break
             # let thread pool worker to work
             time.sleep(0.1)
 
-        self.assertEqual('http://localhost:8080/', log[0][0][0])
-        self.assertEqual(
-            '{"url": "http://nohost/plone/section"}', log[0][1]['data']
-        )
+        self.assertEqual('http://localhost:8080/', get[0][0][0])
+        self.assertEqual({
+            'url': 'http://nohost/plone/section'
+        }, get[0][1]['params'])
+
+        self.assertEqual('http://localhost:8080/', post[0][0][0])
+        self.assertEqual({
+            'url': 'http://nohost/plone/section'
+        }, post[0][1]['json'])
+
+        self.assertEqual('http://localhost:8080/', form[0][0][0])
+        self.assertEqual({
+            'url': 'http://nohost/plone/section'
+        }, form[0][1]['data'])
