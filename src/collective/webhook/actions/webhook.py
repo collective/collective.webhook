@@ -2,9 +2,6 @@
 from concurrent.futures import ThreadPoolExecutor
 from OFS.SimpleItem import SimpleItem
 from plone.app.contentrules import PloneMessageFactory as _
-from plone.app.contentrules.actions import ActionAddForm
-from plone.app.contentrules.actions import ActionEditForm
-from plone.app.contentrules.browser.formhelper import ContentRuleFormWrapper
 from plone.contentrules.rule.interfaces import IExecutable
 from plone.contentrules.rule.interfaces import IRuleElementData
 from plone.stringinterp.interfaces import IStringInterpolator
@@ -15,6 +12,8 @@ from zope import schema
 from zope.component import adapter
 from zope.interface import implementer
 from zope.interface import Interface
+from zope.interface import Invalid
+from zope.schema import ValidationError
 from zope.schema.vocabulary import SimpleTerm
 from zope.schema.vocabulary import SimpleVocabulary
 
@@ -24,6 +23,18 @@ import os
 import requests
 
 
+try:
+    from plone.app.contentrules.browser.formhelper import ContentRuleFormWrapper  # noqa: E501
+    from plone.app.contentrules.actions import ActionAddForm
+    from plone.app.contentrules.actions import ActionEditForm
+    PLONE_4 = False
+except ImportError:
+    from plone.app.contentrules.browser.formhelper import AddForm as ActionAddForm  # noqa: E501
+    from plone.app.contentrules.browser.formhelper import EditForm as ActionEditForm  # noqa: E501
+    from zope.formlib import form
+    PLONE_4 = True
+
+
 logger = logging.getLogger('collective.webhook')
 
 methods = SimpleVocabulary([
@@ -31,6 +42,17 @@ methods = SimpleVocabulary([
     SimpleTerm(value=u'POST', title=_(u'POST')),
     SimpleTerm(value=u'FORM', title=_(u'POST FORM')),
 ])
+
+
+def validate_payload(value):
+    try:
+        if value is not None:
+            json.loads(value)
+    except (ValueError, TypeError) as e:
+        class JSONValidationError(ValidationError):
+            __doc__ = str(e)
+        raise JSONValidationError()
+    return True
 
 
 class IWebhookAction(Interface):
@@ -48,6 +70,7 @@ class IWebhookAction(Interface):
         title=_(u'JSON Payload'),
         description=_(u'The payload you want to dispatch in JSON'),
         required=False,
+        constraint=validate_payload,
     )
 
 
@@ -64,7 +87,11 @@ class PayloadValidator(object):
         self.field = field
 
     def validate(self, value):
-        json.loads(value)
+        try:
+            if value is not None:
+                json.loads(value)
+        except (ValueError, TypeError) as e:
+            raise Invalid(e)
 
 
 @implementer(IWebhookAction, IRuleElementData)
@@ -156,11 +183,30 @@ class WebhookAddForm(ActionAddForm):
     )
     form_name = _(u'Configure element')
     Type = WebhookAction
-    template = ViewPageTemplateFile(os.path.join('templates', 'webhook.pt'))
+
+    if PLONE_4:
+        form_fields = form.FormFields(IWebhookAction)
+        template = ViewPageTemplateFile(
+            os.path.join('templates', 'webhook_p4.pt'),
+        )
+
+        def create(self, data):
+            a = WebhookAction()
+            form.applyChanges(a, self.form_fields, data)
+            return a
+
+    else:
+        template = ViewPageTemplateFile(
+            os.path.join('templates', 'webhook.pt'),
+        )
 
 
-class WebhookAddFormView(ContentRuleFormWrapper):
-    form = WebhookAddForm
+if PLONE_4:
+    class WebhookAddFormView(WebhookAddForm):
+        pass
+else:
+    class WebhookAddFormView(ContentRuleFormWrapper):
+        form = WebhookAddForm
 
 
 class WebhookEditForm(ActionEditForm):
@@ -174,8 +220,21 @@ class WebhookEditForm(ActionEditForm):
         u'interpolated  JSON payload.'
     )
     form_name = _(u'Configure element')
-    template = ViewPageTemplateFile(os.path.join('templates', 'webhook.pt'))
+
+    if PLONE_4:
+        form_fields = form.FormFields(IWebhookAction)
+        template = ViewPageTemplateFile(
+            os.path.join('templates', 'webhook_p4.pt'),
+        )
+    else:
+        template = ViewPageTemplateFile(
+            os.path.join('templates', 'webhook.pt'),
+        )
 
 
-class WebhookEditFormView(ContentRuleFormWrapper):
-    form = WebhookEditForm
+if PLONE_4:
+    class WebhookEditFormView(WebhookEditForm):
+        pass
+else:
+    class WebhookEditFormView(ContentRuleFormWrapper):
+        form = WebhookEditForm
