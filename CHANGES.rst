@@ -4,8 +4,8 @@ Changelog
 0.2.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
+- Add buildout for Plone 4.3
+  [Asko Soukka]
 
 0.2.1 (2018-06-04)
 ------------------
