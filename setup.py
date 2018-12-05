@@ -12,7 +12,7 @@ long_description = '\n\n'.join([
 
 setup(
     name='collective.webhook',
-    version='0.3.0',
+    version='0.3.1.dev0',
     description="Webhook content rule action",
     long_description=long_description,
     # Get more from https://pypi.python.org/pypi?%3Aaction=list_classifiers
