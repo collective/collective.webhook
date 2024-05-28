@@ -21,6 +21,7 @@ import json
 import logging
 import os
 import requests
+import sys
 
 
 try:
@@ -117,7 +118,9 @@ class WebhookAction(SimpleItem):
 
 def interpolate(value, interpolator):
     """Recursively interpolate supported values"""
-    if isinstance(value, unicode):
+    if sys.version_info[0] == 2 and type(value).__name__ == u'unicode':
+        return interpolator(value).strip()
+    elif sys.version_info[0] > 2 and isinstance(value, str):
         return interpolator(value).strip()
     elif isinstance(value, list):
         return [interpolate(v, interpolator) for v in value]
