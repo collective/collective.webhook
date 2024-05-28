@@ -4,8 +4,8 @@ Changelog
 0.3.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
+- Add minimal Python 3 compatibility
+  [Asko Soukka]
 
 0.3.0 (2018-12-05)
 ------------------
