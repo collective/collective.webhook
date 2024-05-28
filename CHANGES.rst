@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.3.1 (unreleased)
+0.3.1 (2024-05-28)
 ------------------
 
 - Add minimal Python 3 compatibility
