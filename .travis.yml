@@ -2,24 +2,19 @@ language: python
 sudo: false
 cache:
   pip: true
-  directories:
-  - eggs
-  - downloads
 python:
-  - "2.7"
+  - "3.11"
 matrix:
   fast_finish: true
 install:
-  - virtualenv -p `which python` .
-  - bin/pip install -r requirements.txt
-  - bin/buildout -c "buildout-${PLONE_VERSION}.cfg" -N buildout:download-cache=downloads code-analysis:return-status-codes=True annotate
-  - bin/buildout -c "buildout-${PLONE_VERSION}.cfg" -N buildout:download-cache=downloads code-analysis:return-status-codes=True
+  - pip install uv
+  - uv venv
+  - uv pip install -e '.[test]'
 before_script:
 - export DISPLAY=:99.0
 - sh -e /etc/init.d/xvfb start
 - firefox -v
 script:
-  - bin/code-analysis
   - bin/test
 after_success:
   - bin/createcoverage
@@ -27,6 +22,3 @@ after_success:
   - bin/python -m coverage.pickle2json
   - pip install coveralls
   - coveralls
-env:
-  - PLONE_VERSION=plone-4.3
-  - PLONE_VERSION=plone-5.1

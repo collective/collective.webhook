@@ -1,5 +1,0 @@
-graft src/collective
-graft docs
-include *.rst *.GPL
-global-exclude *.pyc
-exclude requirements.txt

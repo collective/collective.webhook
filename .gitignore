@@ -12,12 +12,23 @@ develop-eggs/
 eggs/
 htmlcov/
 include/
+instance/
 lib/
 local/
 parts/
 src/*
 test.plone_addon/
 var/
+.uv
+__pycache__/
+.devenv/
+devenv.lock
+devenv.local.nix
+devenv.local.nix.example
+devenv.nix
+devenv.yaml
+.devenv.flake.nix
+
 # files
 .installed.cfg
 .mr.developer.cfg

@@ -1,0 +1,78 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "collective.webhook"
+version = "0.4.0dev0"
+description = "Webhook content rule action"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "GPL version 2" }
+authors = [
+    { name = "Asko Soukka", email = "asko.soukka@iki.fi" },
+]
+classifiers = [
+    "Environment :: Web Environment",
+    "Framework :: Plone",
+    "Framework :: Plone :: 6.0",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.11",
+    "Operating System :: OS Independent",
+    "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
+]
+dependencies = [
+    "requests",
+    "zope-formlib>=6.1",
+]
+
+[project.urls]
+Homepage = "https://github.com/collective/collective-webhook"
+PyPI = "https://pypi.org/project/collective.webhook"
+Source = "https://github.com/collective/collective-webhook"
+Tracker = "https://github.com/collective/collective-webhook/issues"
+
+[project.entry-points."z3c.autoinclude.plugin"]
+target = "plone"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/collective"]
+
+[tool.ruff.lint.isort]
+case-sensitive = false
+no-sections = true
+force-single-line = true
+from-first = true
+lines-after-imports = 2
+lines-between-types = 1
+order-by-type = false
+
+[tool.ruff.format]
+preview = true
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["E501", "RUF001", "S101"]
+
+[tool.coverage.run]
+source_pkgs = ["collective.webhook", "tests"]
+branch = true
+parallel = true
+omit = [
+  "src/collective/webhook/locales/*.py",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[project.optional-dependencies]
+test = [
+    "horse-with-no-namespace",
+    "plone.app.testing",
+    "plone-classicui>=1.0.0",
+    "plone.restapi[test]",
+    "Products.PrintingMailHost",
+    "pytest>=8.4.1",
+    "pytest-cov",
+    "pytest-plone>=1.0.0a2",
+    "zest-releaser>=9.5.0",
+]
