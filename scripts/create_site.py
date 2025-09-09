@@ -43,7 +43,7 @@ newSecurityManager(None, admin)
 
 site_id = "Plone"
 payload = {
-    "title": "Tech Event for Plone",
+    "title": "Webhook action for Plone",
     "profile_id": _DEFAULT_PROFILE,
     "distribution_name": "classic",
     "setup_content": False,
