@@ -8,4 +8,18 @@
 
   <include package=".actions" />
 
+  <adapter
+      factory=".adapters.UUIDSubstitution"
+      provides="plone.stringinterp.interfaces.IStringSubstitution"
+      for="plone.uuid.interfaces.IUUIDAware"
+      name="uid"
+      />
+
+  <adapter
+      factory=".adapters.ParentUUIDSubstitution"
+      provides="plone.stringinterp.interfaces.IStringSubstitution"
+      for="plone.uuid.interfaces.IUUIDAware"
+      name="parent_uid"
+      />
+
 </configure>
