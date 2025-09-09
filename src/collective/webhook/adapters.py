@@ -10,7 +10,7 @@ from zope.interface import Interface
 @adapter(Interface)
 class UUIDSubstitution(BaseSubstitution):
     category = _("All Content")
-    description = _("Identifier of the content or login of managed user")
+    description = _("Unique identifier of the content")
 
     def safe_call(self):
         return IUUID(self.context)
@@ -19,7 +19,7 @@ class UUIDSubstitution(BaseSubstitution):
 @adapter(Interface)
 class ParentUUIDSubstitution(BaseSubstitution):
     category = _("All Content")
-    description = _("Identifier of the parent content or login of managed user")
+    description = _("Unique identifier of the parent content")
 
     def safe_call(self):
         return IUUID(aq_parent(self.context))
