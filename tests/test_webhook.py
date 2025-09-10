@@ -14,6 +14,7 @@ from zope.component import getUtility
 
 import os
 import time
+import transaction
 import unittest
 
 
@@ -68,21 +69,31 @@ class WebhookTests(unittest.TestCase):
         get = []
         rule = portal.restrictedTraverse("++rule++rule-1")
         action = rule.actions[0]
-        action.requests = Mock(get)
+        action._v_requests = Mock(get)
 
         post = []
         rule = portal.restrictedTraverse("++rule++rule-2")
         action = rule.actions[0]
-        action.requests = Mock(post)
+        action._v_requests = Mock(post)
 
         form = []
         rule = portal.restrictedTraverse("++rule++rule-3")
         action = rule.actions[0]
-        action.requests = Mock(form)
+        action._v_requests = Mock(form)
 
         login(portal, TEST_USER_NAME)
         setRoles(portal, TEST_USER_ID, ["Contributor"])
-        portal.invokeFactory("Folder", "section")  # noqa: P001
+        portal.invokeFactory("Folder", "section")
+
+        # let thread pool worker to work
+        time.sleep(1)
+
+        # yet, it should have tasks only after commit
+        self.assertEqual(get, [])
+        self.assertEqual(post, [])
+        self.assertEqual(form, [])
+
+        transaction.commit()
 
         for i in range(10):
             if len(get) and len(post) and len(form):

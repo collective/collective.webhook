@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from collective.webhook.actions.datamanager import DataManager
 from concurrent.futures import ThreadPoolExecutor
 from OFS.SimpleItem import SimpleItem
 from plone.app.contentrules import PloneMessageFactory as _
@@ -24,10 +25,12 @@ from zope.schema import ValidationError
 from zope.schema.vocabulary import SimpleTerm
 from zope.schema.vocabulary import SimpleVocabulary
 
+import functools
 import json
 import logging
 import os
 import requests
+import transaction
 
 
 logger = logging.getLogger("collective.webhook")
@@ -102,7 +105,7 @@ class WebhookAction(SimpleItem):
     payload = ""
 
     element = "plone.actions.Webhook"
-    requests = requests
+    _v_requests = requests
 
     @property
     def summary(self):
@@ -126,6 +129,23 @@ def interpolate(value, interpolator):
 EXECUTOR = ThreadPoolExecutor(max_workers=1)
 
 
+def submit(method: str, url: str, payload: dict, timeout: int, r: requests):
+    """Call webhook"""
+    try:
+        if method == "POST":
+            EXECUTOR.submit(r.post, url, json=payload, timeout=timeout)
+        elif method == "FORM":
+            for key in payload:
+                payload[key] = json.dumps(payload[key]).strip('"')
+            EXECUTOR.submit(r.post, url, data=payload, timeout=timeout)
+        elif method == "GET":
+            for key in payload:
+                payload[key] = json.dumps(payload[key]).strip('"')
+            EXECUTOR.submit(r.get, url, params=payload, timeout=timeout)
+    except TypeError:
+        logger.exception("Error calling webhook:")
+
+
 @implementer(IExecutable)
 @adapter(Interface, IWebhookAction, Interface)
 class WebhookActionExecutor(object):
@@ -140,24 +160,16 @@ class WebhookActionExecutor(object):
 
     def __call__(self):
         method = self.element.method
-        r = self.element.requests
+        r = self.element._v_requests
         url = self.element.url
         obj = self.event.object
         interpolator = IStringInterpolator(obj)
         payload = interpolate(json.loads(self.element.payload), interpolator)
-        try:
-            if method == "POST":
-                EXECUTOR.submit(r.post, url, json=payload, timeout=self.timeout)
-            elif method == "FORM":
-                for key in payload:
-                    payload[key] = json.dumps(payload[key]).strip('"')
-                EXECUTOR.submit(r.post, url, data=payload, timeout=self.timeout)
-            elif method == "GET":
-                for key in payload:
-                    payload[key] = json.dumps(payload[key]).strip('"')
-                EXECUTOR.submit(r.get, url, params=payload, timeout=self.timeout)
-        except TypeError:
-            logger.exception("Error calling webhook:")
+        transaction.get().join(
+            DataManager(
+                functools.partial(submit, method, url, payload, self.timeout, r)
+            )
+        )
         return True
 
 
