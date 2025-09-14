@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from collective.webhook.actions.datamanager import DataManager
+from concurrent.futures import as_completed
 from concurrent.futures import ThreadPoolExecutor
 from OFS.SimpleItem import SimpleItem
 from plone.app.contentrules import PloneMessageFactory as _
@@ -13,6 +14,7 @@ from plone.contentrules.rule.interfaces import IExecutable
 from plone.contentrules.rule.interfaces import IRuleElementData
 from plone.stringinterp.interfaces import IStringInterpolator
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
+from urllib.parse import urlencode
 from z3c.form.interfaces import IValidator
 from z3c.form.util import getSpecification
 from zope import schema
@@ -42,7 +44,7 @@ methods = SimpleVocabulary([
 ])
 
 
-def validate_payload(value):
+def validate_json(value):
     try:
         if value is not None:
             json.loads(value)
@@ -67,10 +69,20 @@ class IWebhookAction(Interface):
         vocabulary=methods,
     )
     payload = schema.Text(
-        title=_("JSON Payload"),
+        title=_("JSON payload"),
         description=_("The payload you want to dispatch in JSON"),
         required=False,
-        constraint=validate_payload,
+        constraint=validate_json,
+    )
+    headers = schema.Text(
+        title=_("JSON headers"),
+        description=_("The headers you want to dispatch in JSON"),
+        required=False,
+        constraint=validate_json,
+    )
+    verbose = schema.Bool(
+        title=_("Verbose logging"),
+        description=_("Whether to log the call and the response"),
     )
 
 
@@ -103,15 +115,22 @@ class WebhookAction(SimpleItem):
     url = ""
     method = ""
     payload = ""
+    headers = ""
+    verbose = False
 
     element = "plone.actions.Webhook"
     _v_requests = requests
 
     @property
     def summary(self):
+        verbose = getattr(self, "verbose", False)
         return _(
-            "${method} ${url}",
-            mapping=dict(method=self.method, url=self.url),
+            "${method} ${url}${verbose}",
+            mapping=dict(
+                method=self.method,
+                url=self.url,
+                verbose=" (verbose)" if verbose else "",
+            ),
         )
 
 
@@ -129,21 +148,65 @@ def interpolate(value, interpolator):
 EXECUTOR = ThreadPoolExecutor(max_workers=1)
 
 
-def submit(method: str, url: str, payload: dict, timeout: int, r: requests):
+def build_curl_cmd(method, url, headers=None, payload=None, form=False) -> str:
+    """Build a curl command example for logging."""
+    curl_cmd = ["curl", "-X", method, url]
+    if headers:
+        for k, v in headers.items():
+            curl_cmd.extend(["-H", f"{k}: {v}"])
+    if method == "POST" and not form and payload is not None:
+        curl_cmd.extend(["-H", f'"Content-Type: application/json"'])
+        curl_cmd.extend(["-d", f"'{json.dumps(payload)}'"])
+    elif form and payload:
+        for k, v in payload.items():
+            curl_cmd.extend(["-F", f'"{k}={v}"'])
+    return " ".join(curl_cmd)
+
+
+def submit(
+    method: str,
+    url: str,
+    headers: dict,
+    payload: dict,
+    timeout: int,
+    verbose: bool,
+    r: requests,
+):
     """Call webhook"""
     try:
+        futures = []
         if method == "POST":
-            EXECUTOR.submit(r.post, url, json=payload, timeout=timeout)
+            if verbose:
+                logger.info(build_curl_cmd("POST", url, headers, payload))
+            futures.append(
+                EXECUTOR.submit(r.post, url, headers, json=payload, timeout=timeout)
+            )
         elif method == "FORM":
             for key in payload:
                 payload[key] = json.dumps(payload[key]).strip('"')
-            EXECUTOR.submit(r.post, url, data=payload, timeout=timeout)
+            if verbose:
+                logger.info(build_curl_cmd("POST", url, headers, payload, form=True))
+            futures.append(
+                EXECUTOR.submit(
+                    r.post, url, data=payload, headers=headers, timeout=timeout
+                )
+            )
         elif method == "GET":
             for key in payload:
                 payload[key] = json.dumps(payload[key]).strip('"')
-            EXECUTOR.submit(r.get, url, params=payload, timeout=timeout)
-    except TypeError:
-        logger.exception("Error calling webhook:")
+            if verbose:
+                url_with_params = url
+                if payload:
+                    url_with_params = f"{url}?{urlencode(payload)}"
+                logger.info(build_curl_cmd("GET", url_with_params, headers))
+            futures.append(EXECUTOR.submit(r.get, url, params=payload, timeout=timeout))
+        for future in as_completed(futures):
+            response = future.result()
+            if verbose:
+                logger.info(response.text)
+            response.raise_for_status()
+    except Exception as e:
+        logger.exception("Error calling webhook: %s", e)
 
 
 @implementer(IExecutable)
@@ -163,11 +226,17 @@ class WebhookActionExecutor(object):
         r = self.element._v_requests
         url = self.element.url
         obj = self.event.object
+        verbose = getattr(self.element, "verbose", False)
         interpolator = IStringInterpolator(obj)
         payload = interpolate(json.loads(self.element.payload), interpolator)
+        headers = interpolate(
+            json.loads(getattr(self.element, "headers", "{}") or "{}"), interpolator
+        )
         transaction.get().join(
             DataManager(
-                functools.partial(submit, method, url, payload, self.timeout, r)
+                functools.partial(
+                    submit, method, url, headers, payload, self.timeout, verbose, r
+                )
             )
         )
         return True
