@@ -1,0 +1,46 @@
+# This repository had no CI. It builds with hatchling and tests with pytest
+# (`[tool.pytest.ini_options] testpaths = ["tests"]`), so this runs pytest —
+# not zope-testrunner, and not a plone/meta template, which assumes setuptools
+# and would clobber the `[project]` table in pyproject.toml.
+#
+# Plone is pinned per job by its release constraints file, the same way the
+# Makefile does it (`-c https://dist.plone.org/release/$(PLONE_VERSION)/constraints.txt`).
+name: Tests
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: "Plone ${{ matrix.plone-version }} / py${{ matrix.python-version }}"
+    runs-on: ubuntu-latest
+    strategy:
+      # One broken combination should not hide the others.
+      fail-fast: false
+      matrix:
+        # pyproject.toml declares requires-python = ">=3.11"
+        python-version: ["3.11", "3.12", "3.13"]
+        plone-version: ["6.0-latest", "6.1-latest", "6.2-latest"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install
+        run: |
+          python -m pip install -U pip
+          pip install -e ".[test]" \
+            -c "https://dist.plone.org/release/${{ matrix.plone-version }}/constraints.txt"
+
+      - name: Show what resolved
+        run: pip list | grep -iE "^(Products.CMFPlone|plone.restapi|plone.app.testing) " || true
+
+      - name: Test
+        run: pytest -q
