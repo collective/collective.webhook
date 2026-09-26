@@ -75,6 +75,16 @@ class ExecutorTests(unittest.TestCase):
             kwargs["headers"],
         )
 
+    def test_unset_payload_is_not_sent(self):
+        for payload in ("", None):
+            for method in ("POST", "FORM", "GET"):
+                recorder = self.execute(payload=payload, method=method)
+                transaction.commit()
+                ((name, args, kwargs),) = self.wait_for(recorder)
+                self.assertFalse(
+                    kwargs.get("json") or kwargs.get("data") or kwargs.get("params")
+                )
+
     def test_missing_or_empty_headers_are_empty(self):
         for headers in ("", None):
             recorder = self.execute(headers=headers)

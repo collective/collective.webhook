@@ -167,7 +167,7 @@ def submit(
     method: str,
     url: str,
     headers: dict,
-    payload: dict,
+    payload: dict | None,
     timeout: int,
     verbose: bool,
     r: requests,
@@ -184,7 +184,7 @@ def submit(
                 )
             )
         elif method == "FORM":
-            for key in payload:
+            for key in payload or {}:
                 payload[key] = json.dumps(payload[key]).strip('"')
             if verbose:
                 logger.info(build_curl_cmd("POST", url, headers, payload, form=True))
@@ -194,7 +194,7 @@ def submit(
                 )
             )
         elif method == "GET":
-            for key in payload:
+            for key in payload or {}:
                 payload[key] = json.dumps(payload[key]).strip('"')
             if verbose:
                 url_with_params = url
@@ -234,7 +234,10 @@ class WebhookActionExecutor(object):
         obj = self.event.object
         verbose = getattr(self.element, "verbose", False)
         interpolator = IStringInterpolator(obj)
-        payload = interpolate(json.loads(self.element.payload), interpolator)
+        raw_payload = getattr(self.element, "payload", None)
+        payload = (
+            interpolate(json.loads(raw_payload), interpolator) if raw_payload else None
+        )
         headers = interpolate(
             json.loads(getattr(self.element, "headers", "{}") or "{}"), interpolator
         )

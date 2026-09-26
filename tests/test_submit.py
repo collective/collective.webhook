@@ -144,6 +144,15 @@ class SubmitTests(unittest.TestCase):
             "curl -X GET http://localhost:8080/", logs.records[0].getMessage()
         )
 
+    def test_none_payload_is_accepted_for_all_methods(self):
+        for method in ("POST", "FORM", "GET"):
+            r = Recorder()
+            submit(method, URL, {}, None, 5, True, r)
+            ((name, args, kwargs),) = r.calls
+            self.assertFalse(
+                kwargs.get("json") or kwargs.get("data") or kwargs.get("params")
+            )
+
     def test_request_error_is_logged_not_raised(self):
         r = Recorder(error=RuntimeError("boom"))
         with self.assertLogs("collective.webhook", "ERROR") as logs:
