@@ -65,6 +65,12 @@ omit = [
 testpaths = ["tests"]
 
 [project.optional-dependencies]
+docs = [
+    "myst-parser",
+    "plone-sphinx-theme",
+    "sphinx-autobuild",
+    "sphinx-copybutton",
+]
 test = [
     "horse-with-no-namespace",
     "plone.app.testing",

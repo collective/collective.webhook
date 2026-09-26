@@ -1,3 +1,0 @@
-==================collective.webhook
-==================
-User documentation

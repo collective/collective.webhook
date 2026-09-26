@@ -124,3 +124,21 @@ test: $(VENV_FOLDER) ## run tests
 .PHONY: test-coverage
 test-coverage: $(VENV_FOLDER) ## run tests with coverage
 	@uv run pytest --cov=collective.webhook --cov-report term-missing
+
+# Docs
+DOCS_PORT?=8000
+
+.PHONY: docs-html
+docs-html: ## Build the documentation
+	@echo "$(GREEN)==> Build documentation$(RESET)"
+	@uv run --extra docs sphinx-build -W --keep-going -b html docs docs/_build/html
+
+.PHONY: docs-screenshots
+docs-screenshots: ## Capture the documentation screenshots from a running Plone site
+	@echo "$(GREEN)==> Capture screenshots$(RESET)"
+	@playwright-python scripts/screenshots.py
+
+.PHONY: docs-watch
+docs-watch: ## Build the documentation and rebuild on changes
+	@echo "$(GREEN)==> Watch documentation$(RESET)"
+	@uv run --extra docs sphinx-autobuild -W --keep-going --port $(DOCS_PORT) --ignore "docs/_build/*" docs docs/_build/html

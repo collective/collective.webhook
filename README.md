@@ -8,7 +8,8 @@ A Plone content rule action for executing HTTP GET or POST with interpolated JSO
 ## Features
 
 - Can be used to trigger webhooks from Plone content rules.
-- Outgoing request are pooled through Plone instance local worker thread throttled by one request / second.
+- Outgoing requests are sent after the transaction commits, one at a time through a single worker thread of the Plone instance.
+  The request that triggered the rule waits for the response.
 
 ## Examples
 
@@ -16,7 +17,8 @@ A Plone content rule action for executing HTTP GET or POST with interpolated JSO
 
 ## Documentation
 
-Full documentation for end users can be found in the "docs" folder.
+Full documentation is in the "docs" folder.
+Run `make docs-html` to build it.
 
 ## Installation
 
