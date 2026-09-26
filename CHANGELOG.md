@@ -2,7 +2,11 @@
 
 ## 0.3.2 (unreleased)
 
-- Nothing changed yet.
+- Fix POST webhooks sending custom headers as form data instead of headers
+  and dropping the JSON payload
+- Fix GET webhooks not sending custom headers
+- Fix `create_tarball` test helper failing on nested directories
+- Add tests for submit, interpolation, data manager, executor and validators
 
 ## 0.3.1 (2024-05-28)
 

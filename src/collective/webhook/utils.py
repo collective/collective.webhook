@@ -15,7 +15,7 @@ def populate_tarball(tar, path, prefix=""):
             tar.addfile(info, BytesIO())
 
             # Populate sub-directory
-            populate_tarball(tar, path[name], prefix + name + "/")
+            populate_tarball(tar, os.path.join(path, name), prefix + name + "/")
 
         else:
             # Add file

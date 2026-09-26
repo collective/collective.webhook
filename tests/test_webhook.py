@@ -9,11 +9,11 @@ from plone.app.testing import TEST_USER_ID
 from plone.app.testing import TEST_USER_NAME
 from plone.contentrules.engine.interfaces import IRuleStorage
 from plone.contentrules.rule.interfaces import IRuleAction
+from tests import drain_executor
 from zope.annotation import IAnnotations
 from zope.component import getUtility
 
 import os
-import time
 import transaction
 import unittest
 
@@ -86,7 +86,7 @@ class WebhookTests(unittest.TestCase):
         portal.invokeFactory("Folder", "section")
 
         # let thread pool worker to work
-        time.sleep(1)
+        drain_executor()
 
         # yet, it should have tasks only after commit
         self.assertEqual(get, [])
@@ -95,11 +95,8 @@ class WebhookTests(unittest.TestCase):
 
         transaction.commit()
 
-        for i in range(10):
-            if len(get) and len(post) and len(form):
-                break
-            # let thread pool worker to work
-            time.sleep(0.1)
+        # let thread pool worker to work
+        drain_executor()
 
         self.assertEqual("http://localhost:8080/", get[0][0][0])
         self.assertEqual({"url": "http://nohost/plone/section"}, get[0][1]["params"])

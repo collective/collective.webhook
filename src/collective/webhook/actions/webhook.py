@@ -179,7 +179,9 @@ def submit(
             if verbose:
                 logger.info(build_curl_cmd("POST", url, headers, payload))
             futures.append(
-                EXECUTOR.submit(r.post, url, headers, json=payload, timeout=timeout)
+                EXECUTOR.submit(
+                    r.post, url, json=payload, headers=headers, timeout=timeout
+                )
             )
         elif method == "FORM":
             for key in payload:
@@ -199,7 +201,11 @@ def submit(
                 if payload:
                     url_with_params = f"{url}?{urlencode(payload)}"
                 logger.info(build_curl_cmd("GET", url_with_params, headers))
-            futures.append(EXECUTOR.submit(r.get, url, params=payload, timeout=timeout))
+            futures.append(
+                EXECUTOR.submit(
+                    r.get, url, params=payload, headers=headers, timeout=timeout
+                )
+            )
         for future in as_completed(futures):
             response = future.result()
             if verbose:
