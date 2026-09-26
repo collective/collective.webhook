@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.4.0 (unreleased)
+## 0.4.0 (2026-09-26)
 
 - Add execution only after successful transaction
   [datakurre]
