@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.1 (unreleased)
+
+
+- Nothing changed yet.
+
+
 ## 0.4.0 (2026-09-26)
 
 - Add execution only after successful transaction
